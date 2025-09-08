@@ -81,11 +81,6 @@ const download = async (url: string) => {
     }
 };
 
-const saveSummary = (url: string, summary: string) => {
-    const fileName = md5(url);
-    fs.writeFileSync(`${WEB_PAGE_CACHE_DIR}/${fileName}_summary`, summary);
-};
-
 const searchToSummary = async (queries: string[], postStructure: string) => {
     const searchResults = await Promise.all(queries.map((query) => search(query)));
     const result = searchResults.flat();
@@ -121,7 +116,8 @@ ${JSON.stringify(result)}
             try {
                 const summaryResult = await askLLM(`
 あなたはプログラマとしてごく短い記事を作成しています。
-記事を作成するのに以下のWebページから必要な情報のみを抽出してまとめてください。
+記事を作成するのに以下のWebページから必要な情報のみを抽出してまとめて
+${WEB_PAGE_CACHE_DIR}/${md5(url)}_summary という名前のファイルに出力してください。
 文章の長さ（コードは除く）は1000字以内としてください。
 参考にならなそうな場合は何も出力しないで終了してください。
 
@@ -131,7 +127,6 @@ ${postStructure}
 # Webページ
 @${WEB_PAGE_CACHE_DIR}/${md5(url)}
 `);
-                saveSummary(url, summaryResult);
                 console.log(summaryResult);
             } catch (e) {
                 console.log(e);
@@ -320,7 +315,7 @@ ${mergedSummaries.map((s) => `@${s.summaryFilePath} (${s.url})`).join("\n")}
             // 関係ないのにqiitaってタグつけがち
             .filter((t) => t.toLowerCase() !== "qiita")
             .slice(0, 5)
-            .map((t) => ({ name: t, versions: [] })),
+            .map((t) => ({ name: t.replaceAll(" ", ""), versions: [] })),
         QIITA_ACCESS_TOKEN
     );
 
