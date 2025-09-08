@@ -31,7 +31,12 @@ if (!QIITA_ACCESS_TOKEN) {
     throw new Error("QIITA_ACCESS_TOKEN is not set");
 }
 
-const WEB_PAGE_CACHE_DIR = "./web-page-cache";
+const WORK_DIR = "./.gomi-qiita-work";
+const WEB_PAGE_CACHE_DIR = WORK_DIR + "/web-page-cache";
+
+if (!fs.existsSync(WORK_DIR)) {
+    fs.mkdirSync(WORK_DIR);
+}
 
 if (!fs.existsSync(WEB_PAGE_CACHE_DIR)) {
     fs.mkdirSync(WEB_PAGE_CACHE_DIR);
@@ -54,10 +59,10 @@ const search = async (query: string, num = 10) => {
     );
 };
 const saveUrls = (urls: string[]) => {
-    fs.writeFileSync(`${WEB_PAGE_CACHE_DIR}/urls.txt`, urls.join("\n"));
+    fs.writeFileSync(`${WORK_DIR}/urls.txt`, urls.join("\n"));
 };
 const loadUrls = () => {
-    return fs.readFileSync(`${WEB_PAGE_CACHE_DIR}/urls.txt`, "utf-8").split("\n");
+    return fs.readFileSync(`${WORK_DIR}/urls.txt`, "utf-8").split("\n");
 };
 const download = async (url: string) => {
     if (fs.existsSync(`${WEB_PAGE_CACHE_DIR}/${md5(url)}`)) {
@@ -218,13 +223,13 @@ ${postStructureResult}
     console.log(mergedSummaries);
 
     try {
-        fs.unlinkSync("./output.md");
+        fs.unlinkSync(`${WORK_DIR}/output.md`);
     } catch (e) {}
 
     const postWriterResult = await askLLM(
         `
 あなたはIT技術記事ライターです。
-以下の構成と調査内容を元にして記事をマークダウン形式で output.md に出力してください。
+以下の構成と調査内容を元にして記事をマークダウン形式で ${WORK_DIR}/output.md に出力してください。
 
 # 構成
 
@@ -241,18 +246,18 @@ ${mergedSummaries.map((s) => `@${s.summaryFilePath} (${s.url})`).join("\n")}
 
     console.log(postWriterResult);
 
-    if (!fs.existsSync("./output.md")) {
+    if (!fs.existsSync(`${WORK_DIR}/output.md`)) {
         console.log("output.md が見つかりません");
         return;
     }
 
     try {
-        fs.unlinkSync("./output2.md");
+        fs.unlinkSync(`${WORK_DIR}/output2.md`);
     } catch (e) {}
 
     const postWriter2Result = await askLLM(
         `
-@output.md を元に記事をリライトしてQiita用の記事 output2.md に出力してください。
+@output.md を元に記事をリライトしてQiita用の記事 ${WORK_DIR}/output2.md に出力してください。
 
 # 制約事項
 
@@ -283,48 +288,48 @@ ${mergedSummaries.map((s) => `@${s.summaryFilePath} (${s.url})`).join("\n")}
 
     console.log(postWriter2Result);
 
-    if (!fs.existsSync("./output2.md")) {
+    if (!fs.existsSync(`${WORK_DIR}/output2.md`)) {
         console.log("output2.md が見つかりません");
         return;
     }
 
     try {
-        fs.unlinkSync("./title.txt");
+        fs.unlinkSync(`${WORK_DIR}/title.txt`);
     } catch (e) {}
     try {
-        fs.unlinkSync("./body.txt");
+        fs.unlinkSync(`${WORK_DIR}/body.txt`);
     } catch (e) {}
     try {
-        fs.unlinkSync("./tags.txt");
+        fs.unlinkSync(`${WORK_DIR}/tags.txt`);
     } catch (e) {}
 
     const qiitaResult = await askLLM(`
-@output2.md を元にQiitaに投稿するのに必要な情報を title.txt と body.txt と tags.txt に出力してください。
-- title.txt 記事のタイトル（例：【〇〇向け】〇〇〇〇〇【〇〇編】）
-- body.txt 記事の本文（マークダウン形式。タイトル行は含めない）
-- tags.txt 記事のタグ（スペース禁止。カンマ区切り） 例：AndroidStudio,Android
+@output2.md を元にQiitaに投稿するのに必要な情報を以下のファイルに出力してください。
+- ${WORK_DIR}/title.txt 記事のタイトル（例：【〇〇向け】〇〇〇〇〇【〇〇編】）
+- ${WORK_DIR}/body.txt 記事の本文（マークダウン形式。タイトル行は含めない）
+- ${WORK_DIR}/tags.txt 記事のタグ（スペース禁止。カンマ区切り） 例：AndroidStudio,Android
 `);
 
     console.log(qiitaResult);
 
-    if (!fs.existsSync("./title.txt")) {
+    if (!fs.existsSync(`${WORK_DIR}/title.txt`)) {
         console.log("title.txt が見つかりません");
         return;
     }
 
-    if (!fs.existsSync("./body.txt")) {
+    if (!fs.existsSync(`${WORK_DIR}/body.txt`)) {
         console.log("body.txt が見つかりません");
         return;
     }
 
-    if (!fs.existsSync("./tags.txt")) {
+    if (!fs.existsSync(`${WORK_DIR}/tags.txt`)) {
         console.log("tags.txt が見つかりません");
         return;
     }
 
-    const title = fs.readFileSync("./title.txt", "utf-8");
-    const body = fs.readFileSync("./body.txt", "utf-8");
-    const tags = fs.readFileSync("./tags.txt", "utf-8");
+    const title = fs.readFileSync(`${WORK_DIR}/title.txt`, "utf-8");
+    const body = fs.readFileSync(`${WORK_DIR}/body.txt`, "utf-8");
+    const tags = fs.readFileSync(`${WORK_DIR}/tags.txt`, "utf-8");
 
     await postToQiita(
         title,
