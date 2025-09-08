@@ -92,7 +92,7 @@ const searchToSummary = async (queries: string[], postStructure: string) => {
     console.log(result);
 
     const urlSelectorResult = await askLLM(`
-あなたはIT技術記事ライターです。
+あなたはプログラマとしてごく短い記事を作成しています。
 記事を作成するのに必要なWebページを検索結果から最大6つ選択し、URLだけを1行ずつ出力してください。
 
 # 構成
@@ -120,7 +120,7 @@ ${JSON.stringify(result)}
 
             try {
                 const summaryResult = await askLLM(`
-あなたはIT技術記事ライターです。
+あなたはプログラマとしてごく短い記事を作成しています。
 記事を作成するのに以下のWebページから必要な情報のみを抽出してまとめてください。
 文章の長さ（コードは除く）は1000字以内としてください。
 参考にならなそうな場合は何も出力しないで終了してください。
@@ -155,7 +155,7 @@ ${postStructure}
     // console.log(result);
 
     const result = await askLLM(`
-あなたはIT技術記事ライターです。
+あなたはプログラマとしてごく短い記事を作成しています。
 「${originalText}」という文章にまつわる記事を作成するのに必要な検索クエリを最大3つ、英語で1行ずつ出力してください。
 3つはそれぞれ独立し、幅広く、多角的な視点が得られるものにしてください。
 `);
@@ -168,7 +168,7 @@ ${postStructure}
     console.log(summaries);
 
     const postStructureResult = await askLLM(`
-あなたはIT技術記事ライターです。
+あなたはプログラマとしてごく短い記事を作成しています。
 「${originalText}」という文章にまつわる記事を作成するのに情報を集めました。
 これを元にあなたは以下の記事の構成情報を出力してください。
 
@@ -183,7 +183,7 @@ ${JSON.stringify(summaries, null, 2)}
     console.log(postStructureResult);
 
     const writerResult = await askLLM(`
-あなたはIT技術記事ライターです。
+あなたはプログラマとしてごく短い記事を作成しています。
 「${originalText}」という文章にまつわる記事を作成します。調査内容と構成は以下にするとき、追加で必要な検索クエリを最大3つ、英語で1行ずつ出力してください。
 3つはそれぞれ独立し、幅広く、多角的な視点が得られるものにしてください。
 
@@ -228,36 +228,8 @@ ${postStructureResult}
 
     const postWriterResult = await askLLM(
         `
-あなたはIT技術記事ライターです。
-以下の構成と調査内容を元にして記事をマークダウン形式で ${WORK_DIR}/output.md に出力してください。
-
-# 構成
-
-${postStructureResult}
-
-これに加えて、末尾に参考サイトのURLを添付すること。
-
-# 調査内容
-
-${mergedSummaries.map((s) => `@${s.summaryFilePath} (${s.url})`).join("\n")}
-`,
-        true
-    );
-
-    console.log(postWriterResult);
-
-    if (!fs.existsSync(`${WORK_DIR}/output.md`)) {
-        console.log("output.md が見つかりません");
-        return;
-    }
-
-    try {
-        fs.unlinkSync(`${WORK_DIR}/output2.md`);
-    } catch (e) {}
-
-    const postWriter2Result = await askLLM(
-        `
-@output.md を元に記事をリライトしてQiita用の記事 ${WORK_DIR}/output2.md に出力してください。
+あなたはプログラマとしてごく短い記事をQiita用に作成します。
+以下の情報を元にして記事をマークダウン形式で ${WORK_DIR}/output.md に出力してください。
 
 # 制約事項
 
@@ -282,14 +254,23 @@ ${mergedSummaries.map((s) => `@${s.summaryFilePath} (${s.url})`).join("\n")}
 - \`Blockquotes\`
 - \`リンクカード\`
 
+# 構成
+
+${postStructureResult}
+
+これに加えて、末尾に参考サイトのURLを添付すること。
+
+# 調査内容
+
+${mergedSummaries.map((s) => `@${s.summaryFilePath} (${s.url})`).join("\n")}
 `,
         true
     );
 
-    console.log(postWriter2Result);
+    console.log(postWriterResult);
 
-    if (!fs.existsSync(`${WORK_DIR}/output2.md`)) {
-        console.log("output2.md が見つかりません");
+    if (!fs.existsSync(`${WORK_DIR}/output.md`)) {
+        console.log("output.md が見つかりません");
         return;
     }
 
@@ -304,7 +285,7 @@ ${mergedSummaries.map((s) => `@${s.summaryFilePath} (${s.url})`).join("\n")}
     } catch (e) {}
 
     const qiitaResult = await askLLM(`
-@output2.md を元にQiitaに投稿するのに必要な情報を以下のファイルに出力してください。
+@output.md を元にQiitaに投稿するのに必要な情報を以下のファイルに出力してください。
 - ${WORK_DIR}/title.txt 記事のタイトル（例：【〇〇向け】〇〇〇〇〇【〇〇編】）
 - ${WORK_DIR}/body.txt 記事の本文（マークダウン形式。タイトル行は含めない）
 - ${WORK_DIR}/tags.txt 記事のタグ（スペース禁止。カンマ区切り） 例：AndroidStudio,Android
