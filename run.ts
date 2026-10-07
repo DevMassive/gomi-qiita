@@ -235,6 +235,7 @@ ${postStructureResult}
 - 「その他の〇〇」や「関連する〇〇」や「まとめ」は削除
 - ユーモアは無し
 - マニュアルさを無くして平易な表現にする
+- 記事の書き出しは引用とする。たとえば記事の中心となるテーマの公式サイトでの定義や、悩みの実際の声など。印象的なもの。
 
 # 文体の例
 
@@ -280,7 +281,7 @@ ${mergedSummaries.map((s) => `@${s.summaryFilePath} (${s.url})`).join("\n")}
     } catch (e) {}
 
     const qiitaResult = await askLLM(`
-@output.md を元にQiitaに投稿するのに必要な情報を以下のファイルに出力してください。
+@${WORK_DIR}/output.md を元にQiitaに投稿するのに必要な情報を以下のファイルに出力してください。
 - ${WORK_DIR}/title.txt 記事のタイトル（例：【〇〇向け】〇〇〇〇〇【〇〇編】）
 - ${WORK_DIR}/body.txt 記事の本文（マークダウン形式。タイトル行は含めない）
 - ${WORK_DIR}/tags.txt 記事のタグ（スペース禁止。カンマ区切り） 例：AndroidStudio,Android
